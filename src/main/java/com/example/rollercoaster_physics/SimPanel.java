@@ -114,7 +114,7 @@ public class SimPanel {
         box.getChildren().addAll(keLabel, keCanvas, peLabel, peCanvas, teLabel, aLabel);
         box.getChildren().add(makeLine());
 
-        // draw empty bars at the start
+        // draw empty bars at the startb
         drawBar(keCanvas, 0, Color.rgb(30, 144, 255));
         drawBar(peCanvas, 0, Color.rgb(80, 200, 120));
 
