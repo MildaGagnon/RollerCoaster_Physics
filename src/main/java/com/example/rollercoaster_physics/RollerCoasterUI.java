@@ -16,7 +16,7 @@ import javafx.scene.text.FontWeight;
 import javafx.stage.Stage;
 
 public class RollerCoasterUI extends Application {
-
+//test
     private Stage stage;
 
     private double mass = 5.0;
