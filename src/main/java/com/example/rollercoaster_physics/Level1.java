@@ -2,6 +2,7 @@ package com.example.rollercoaster_physics;
 
 public class Level1 {
 
+
     private static final float SLOPE_ANGLE = 25;     // degrees
     private static final float FRICTION    = 0.10f;  // smooth track
 

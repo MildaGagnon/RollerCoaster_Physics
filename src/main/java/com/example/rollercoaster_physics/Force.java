@@ -26,5 +26,4 @@ public class Force {
         float y = (float)(magnitude * Math.sin(rad));
         return new Vector2D(x, y);
     }
-
 }
