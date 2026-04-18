@@ -377,8 +377,8 @@ public class LevelTest {
         double nLen = Math.min(NORMAL_BASE + N * NORMAL_SCALE, ARROW_MAX);
         setArrow(normalLine, normalHead, normalLabel,
                 ballX, ballY,
-                ballX + offsetX * nLen,
-                ballY + offsetY * nLen);
+                ballX - offsetX * nLen,
+                ballY - offsetY * nLen);
 
         // friction arrow
         if (Math.abs(v) > 0.05) {

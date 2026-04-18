@@ -67,25 +67,22 @@ import java.util.ArrayList;
         public void update(MotionData data) {
             line.getPoints().clear();
             ArrayList<Double> yValues = data.getPositions();
-            if (yValues.size() < 2) { maxLabel.setText(""); return; }
+            if (yValues.size() < 2) { maxLabel.setText(""); minLabel.setText("0"); return; }
 
-            double maxVal = yValues.get(0);
-            double minVal = yValues.get(0);
-            for (int i = 1; i < yValues.size(); i++) {
-                if (yValues.get(i) > maxVal) maxVal = yValues.get(i);
-                if (yValues.get(i) < minVal) minVal = yValues.get(i);
-            }
-            double range = maxVal - minVal;
-            if (range == 0) range = 1;
+            // position always starts at 0 and goes up — fix min at 0
+            double maxVal = 0;
+            for (double v : yValues) if (v > maxVal) maxVal = v;
+            if (maxVal == 0) maxVal = 1;
 
             maxLabel.setText(String.format("%.1f", maxVal));
+            minLabel.setText("0");
 
             double chartW = RIGHT - LEFT;
             double chartH = BOTTOM - TOP;
             for (int i = 0; i < yValues.size(); i++) {
                 double x = LEFT + (double) i / (yValues.size() - 1) * chartW;
-                double y = BOTTOM - ((yValues.get(i) - minVal) / range) * chartH;
+                double y = BOTTOM - (yValues.get(i) / maxVal) * chartH;
                 line.getPoints().addAll(x, y);
             }
         }
-    }
+        }

@@ -445,6 +445,19 @@ public class Level3Test {
         double ballX   = xy[0] - normalX * BALL_RADIUS;
         double ballY   = xy[1] - normalY * BALL_RADIUS;
 
+// normal direction — always points away from track surface toward outside
+        double nDirX, nDirY;
+        if (inLoop(pos)) {
+            // inside loop: point from ball INWARD toward loop centre
+            double toCX = LOOP_CENTER_X - ballX;
+            double toCY = LOOP_CENTER_Y - ballY;
+            double len  = Math.sqrt(toCX * toCX + toCY * toCY);
+            nDirX = toCX / len;
+            nDirY = toCY / len;
+        } else {
+            nDirX = -normalX;
+            nDirY = -normalY;
+        }
         ball.setCenterX(ballX); ball.setCenterY(ballY);
         ballShine.setCenterX(ballX - BALL_RADIUS * 0.3);
         ballShine.setCenterY(ballY - BALL_RADIUS * 0.4);
@@ -475,9 +488,9 @@ public class Level3Test {
         setArrow(gravityLine, gravityHead, gravityLabel, ballX, ballY, ballX, ballY + fgLen);
 
         // normal arrow
-        double nLen = Math.min(NORMAL_BASE + N * NORMAL_SCALE, ARROW_MAX);
+        double nLen = Math.min(NORMAL_BASE + N * 0.3, 35);
         setArrow(normalLine, normalHead, normalLabel, ballX, ballY,
-                ballX + normalX * nLen, ballY + normalY * nLen);
+                ballX + nDirX * nLen, ballY + nDirY * nLen);
 
         // friction arrow
         if (Math.abs(v) > 0.05) {

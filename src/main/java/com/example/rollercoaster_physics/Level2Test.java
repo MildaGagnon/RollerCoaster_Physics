@@ -365,7 +365,7 @@ public class Level2Test {
 
         double nLen = Math.min(NORMAL_BASE + N * NORMAL_SCALE, ARROW_MAX);
         setArrow(normalLine, normalHead, normalLabel, ballX, ballY,
-                ballX + normalX * nLen, ballY + normalY * nLen);
+                ballX - normalX * nLen, ballY - normalY * nLen);
 
         if (Math.abs(v) > 0.05) {
             double ffLen = Math.min(FRICTION_BASE + ff * FRICTION_SCALE, ARROW_MAX);
