@@ -2,11 +2,11 @@ package com.example.rollercoaster_physics;
 
 import javafx.scene.layout.Pane;
 
-public class LevelTestAdapter extends LevelTest {
+public class LevelTestAdapter2 extends LevelTest {
 
     private Level2Test level2;
 
-    public LevelTestAdapter(Level2Test level2) {
+    public LevelTestAdapter2(Level2Test level2) {
         super(
                 new Cart(5, 8, "Sphere",
                         new Cart.Material("Metal", 0.2f),

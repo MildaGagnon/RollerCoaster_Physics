@@ -3,8 +3,33 @@ import com.example.rollercoaster_physics.Cart;
 import com.example.rollercoaster_physics.Track;
 public class PhysicsEngine {
 
-
     private static final float G = 9.81f;
+
+    // Level 3 loop constants — must match Level3Test.java EXACTLY
+    private static final double L3_LOOP_RADIUS   = 90;
+    private static final double L3_LOOP_CENTER_X = 400;
+    private static final double L3_LOOP_CENTER_Y = 260;
+    private static final double L3_LOOP_BOTTOM_Y = L3_LOOP_CENTER_Y + L3_LOOP_RADIUS; // 350
+    private static final double L3_SLOPE_START_X = 60;
+    private static final double L3_SLOPE_START_Y = 140;
+    private static final double L3_SLOPE_END_X   = L3_LOOP_CENTER_X - L3_LOOP_RADIUS; // 310
+    private static final double L3_SLOPE_END_Y   = L3_LOOP_BOTTOM_Y;                  // 350
+    private static final double L3_EXIT_START_X  = L3_LOOP_CENTER_X + L3_LOOP_RADIUS; // 490
+    private static final double L3_EXIT_END_X    = 750;
+    private static final double L3_EXIT_Y        = L3_LOOP_BOTTOM_Y;
+    private static final double L3_PPM           = 35;
+
+    private static final double L3_SLOPE_LEN;
+    private static final double L3_LOOP_CIRC;
+    private static final double L3_EXIT_LEN;
+
+    static {
+        L3_SLOPE_LEN = Math.sqrt(
+                (L3_SLOPE_END_X - L3_SLOPE_START_X) * (L3_SLOPE_END_X - L3_SLOPE_START_X) +
+                        (L3_SLOPE_END_Y - L3_SLOPE_START_Y) * (L3_SLOPE_END_Y - L3_SLOPE_START_Y));
+        L3_LOOP_CIRC = 2 * Math.PI * L3_LOOP_RADIUS;
+        L3_EXIT_LEN  = L3_EXIT_END_X - L3_EXIT_START_X;
+    }
 
     private Cart  cart;
     private Track track;
@@ -14,20 +39,32 @@ public class PhysicsEngine {
         this.track = track;
     }
 
-    // ── detects which level we are in based on track slope angle ─
-    // Level 1 uses slopeAngle = 25  (straight ramp, fixed angle)
-    // Level 2 uses slopeAngle = 0   (parabola, dynamic angle)
+    // returns the slope angle at the ball's current position
     private float getCurrentAngleRad() {
-
         float storedAngle = track.getSlopeAngle();
 
-        // Level 1 — straight ramp, angle is fixed
-        if (storedAngle != 0) {
+        // Level 1 — straight ramp
+        if (storedAngle > 0) {
             return (float) Math.toRadians(storedAngle);
         }
 
-        // Level 2 — parabola, angle is dynamic based on position
-        // parabola constants matching Level2Test.java
+        // Level 3 — loop track (slopeAngle = -1)
+        if (storedAngle < 0) {
+            double px = cart.getState().position.x * L3_PPM;
+            if (px <= L3_SLOPE_LEN) {
+                return (float) Math.atan2(
+                        L3_SLOPE_END_Y - L3_SLOPE_START_Y,
+                        L3_SLOPE_END_X - L3_SLOPE_START_X);
+            }
+            px -= L3_SLOPE_LEN;
+            if (px <= L3_LOOP_CIRC) {
+                double angle = (Math.PI / 2) - (px / L3_LOOP_RADIUS);
+                return (float)(angle - Math.PI / 2);
+            }
+            return 0f;
+        }
+
+        // Level 2 — parabola (slopeAngle = 0)
         double trackXStart  = 60;
         double trackXEnd    = 890;
         double trackMidX    = (trackXStart + trackXEnd) / 2.0;
@@ -37,12 +74,10 @@ public class PhysicsEngine {
                 / ((trackMidX - trackXStart) * (trackMidX - trackXStart));
         double pixelsPerMeter = 2.5;
 
-        // walk along the arc to find current screen x
         double pixels = cart.getState().position.x * pixelsPerMeter;
         double x = trackXStart;
         double accumulated = 0;
         double step = 0.5;
-
         while (x < trackXEnd) {
             double y1     = trackBottomY + A * (x - trackMidX) * (x - trackMidX);
             double y2     = trackBottomY + A * (x + step - trackMidX) * (x + step - trackMidX);
@@ -51,56 +86,65 @@ public class PhysicsEngine {
             accumulated += segLen;
             x += step;
         }
-
-        // dy/dx at this x gives the slope angle
         double dy_dx = 2.0 * A * (x - trackMidX);
         return (float) Math.atan2(dy_dx, 1.0);
     }
 
     public float getGravityForce() {
-        float angleRad = getCurrentAngleRad();
-        return (float) cart.getMass() * G * (float) Math.sin(angleRad);
+        float angle = getCurrentAngleRad();
+        return (float)(cart.getMass() * G * Math.sin(angle));
     }
 
     public float getNormalForce() {
-        float angleRad = getCurrentAngleRad();
-        return (float) cart.getMass() * G * (float) Math.abs(Math.cos(angleRad));
+        float angle = getCurrentAngleRad();
+        return (float)(cart.getMass() * G * Math.abs(Math.cos(angle)));
     }
 
     public float getFrictionForce() {
         float mu  = track.getFrictionCoeff();
         float N   = getNormalForce();
         float vel = cart.getState().velocity.x;
-        // friction always opposes motion direction
-        // if ball moves forward (positive) friction is negative
-        // if ball moves backward (negative) friction is positive
-        if (vel > 0.01f)  return -mu * N;
+        if (vel >  0.01f) return -mu * N;
         if (vel < -0.01f) return  mu * N;
         return 0;
     }
 
     public void update(float dt) {
         Cart.cartState state = cart.getState();
-        float mass = (float) cart.getMass();
+        float mass    = (float) cart.getMass();
+        float angle   = getCurrentAngleRad();
+        float mu      = track.getFrictionCoeff();
 
-        float gravityAlong = getGravityForce();
-        float friction     = getFrictionForce();
-        float netForce     = gravityAlong + friction;
+        // gravity component along the track
+        // positive angle = uphill to the right → gravity opposes forward motion
+        // negative angle = downhill to the right → gravity aids forward motion
+        float gravityAlong = (float)(mass * G * Math.sin(angle));
+
+        // normal force
+        float normalForce = (float)(mass * G * Math.abs(Math.cos(angle)));
+
+        // friction always opposes direction of motion
+        float vel = state.velocity.x;
+        float friction;
+        if      (vel >  0.02f) friction = -mu * normalForce;
+        else if (vel < -0.02f) friction =  mu * normalForce;
+        else                   friction = 0;
+
+        float netForce    = gravityAlong + friction;
         float acceleration = netForce / mass;
 
         state.velocity.x     = state.velocity.x + acceleration * dt;
         state.position.x     = state.position.x + state.velocity.x * dt;
         state.acceleration.x = acceleration;
 
-        // stop the ball if it rolls back past the start
+        // clamp at start
         if (state.position.x < 0) {
             state.position.x = 0;
             state.velocity.x = 0;
         }
 
-        // stop the ball if it slows to nearly zero
-        // (friction has killed all energy — ball rests at bottom)
-        if (Math.abs(state.velocity.x) < 0.01f && Math.abs(gravityAlong) < 0.05f) {
+        // stop if nearly stationary at flat ground (angle ≈ 0)
+        if (Math.abs(state.velocity.x) < 0.005f && Math.abs(angle) < 0.05f) {
             state.velocity.x     = 0;
             state.acceleration.x = 0;
         }

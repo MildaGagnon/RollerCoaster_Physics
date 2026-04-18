@@ -114,7 +114,7 @@ public class SimPanel {
         box.getChildren().addAll(keLabel, keCanvas, peLabel, peCanvas, teLabel, aLabel);
         box.getChildren().add(makeLine());
 
-        // draw empty bars at the startb
+        // draw empty bars at the start
         drawBar(keCanvas, 0, Color.rgb(30, 144, 255));
         drawBar(peCanvas, 0, Color.rgb(80, 200, 120));
 
@@ -246,6 +246,41 @@ public class SimPanel {
             double heightPx = trackBottomY - screenY;
             if (heightPx < 0) heightPx = 0;
             return heightPx / pixelsPerMeter;
+
+        } else if (track.getSlopeAngle() < 0) {
+            // Level 3 — loop track — constants must match Level3Test.java EXACTLY
+            double loopRadius  = 90;
+            double loopCenterX = 400;
+            double loopCenterY = 260;
+            double slopeEndX   = loopCenterX - loopRadius; // 310
+            double slopeEndY   = loopCenterY + loopRadius; // 350
+            double slopeStartX = 60;
+            double slopeStartY = 140;
+            double exitY       = slopeEndY;
+            double ppm         = 35;
+
+            double slopeLen = Math.sqrt(
+                    (slopeEndX - slopeStartX) * (slopeEndX - slopeStartX) +
+                            (slopeEndY - slopeStartY) * (slopeEndY - slopeStartY));
+            double loopCirc = 2 * Math.PI * loopRadius;
+
+            double px = cart.getState().position.x * ppm;
+            double screenY;
+            if (px <= slopeLen) {
+                double t = px / slopeLen;
+                screenY = slopeStartY + t * (slopeEndY - slopeStartY);
+            } else {
+                px -= slopeLen;
+                if (px <= loopCirc) {
+                    double angle = (Math.PI / 2) - (px / loopRadius);
+                    screenY = loopCenterY + loopRadius * Math.sin(angle);
+                } else {
+                    screenY = exitY;
+                }
+            }
+            double heightPx = exitY - screenY;
+            if (heightPx < 0) heightPx = 0;
+            return heightPx / ppm;
 
         } else {
             // Level 1 — straight ramp at 25 degrees

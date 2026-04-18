@@ -16,30 +16,30 @@ import javafx.scene.text.FontWeight;
 import javafx.stage.Stage;
 
 public class RollerCoasterUI extends Application {
-//test
+
     private Stage stage;
 
-    private double mass = 5.0;
+    private double mass         = 5.0;
     private double initVelocity = 8.0;
-    private String objShape = "Sphere";
-    private String objMaterial = "Metal";
+    private String objShape     = "Sphere";
+    private String objMaterial  = "Metal";
 
-    private static final Color BACKGROUND_DARK = Color.rgb(8, 18, 40);
-    private static final Color BACKGROUND_PANEL = Color.rgb(13, 27, 62);
-    private static final Color BACKGROUND_CARD = Color.rgb(18, 42, 90);
-    private static final Color ACCENT_BLUE = Color.rgb(30, 144, 255);
-    private static final Color BORDER_SOFT = Color.rgb(70, 130, 180);
-    private static final Color TEXT_WHITE = Color.WHITE;
-    private static final Color TEXT_LIGHT = Color.rgb(173, 216, 230);
-    private static final Color TEXT_DIM = Color.rgb(100, 149, 237);
-    private static final Color TEXT_CYAN = Color.rgb(147, 227, 227);
-    private static final Color SIMULATION_BG = Color.rgb(228, 238, 255);
+    private static final Color BACKGROUND_DARK  = Color.rgb(8,   18,  40);
+    private static final Color BACKGROUND_PANEL = Color.rgb(13,  27,  62);
+    private static final Color BACKGROUND_CARD  = Color.rgb(18,  42,  90);
+    private static final Color ACCENT_BLUE      = Color.rgb(30,  144, 255);
+    private static final Color BORDER_SOFT      = Color.rgb(70,  130, 180);
+    private static final Color TEXT_WHITE       = Color.WHITE;
+    private static final Color TEXT_LIGHT       = Color.rgb(173, 216, 230);
+    private static final Color TEXT_DIM         = Color.rgb(100, 149, 237);
+    private static final Color TEXT_CYAN        = Color.rgb(147, 227, 227);
+    private static final Color SIMULATION_BG    = Color.rgb(228, 238, 255);
 
     // ── charts created ONCE here, shared across all levels ───────
-    private ChartPosition chartPos;
-    private ChartVelocity chartVel;
+    private ChartPosition     chartPos;
+    private ChartVelocity     chartVel;
     private ChartAcceleration chartAcc;
-    private ChartEnergy chartEnergy;
+    private ChartEnergy       chartEnergy;
 
     @Override
     public void start(Stage primaryStage) {
@@ -48,9 +48,9 @@ public class RollerCoasterUI extends Application {
         stage.setResizable(false);
 
         // create the 4 charts once — they will be reused by every level
-        chartPos = new ChartPosition();
-        chartVel = new ChartVelocity();
-        chartAcc = new ChartAcceleration();
+        chartPos    = new ChartPosition();
+        chartVel    = new ChartVelocity();
+        chartAcc    = new ChartAcceleration();
         chartEnergy = new ChartEnergy();
 
         goToWelcome();
@@ -111,9 +111,9 @@ public class RollerCoasterUI extends Application {
         HBox levelRow = new HBox(24);
         levelRow.setAlignment(Pos.CENTER);
 
-        String[] names = MainMenu.getLevelNames();
-        String[] descs = MainMenu.getLevelDescriptions();
-        Color[] colors = {TEXT_CYAN, ACCENT_BLUE, BORDER_SOFT};
+        String[] names  = MainMenu.getLevelNames();
+        String[] descs  = MainMenu.getLevelDescriptions();
+        Color[]  colors = { TEXT_CYAN, ACCENT_BLUE, BORDER_SOFT };
 
         for (int i = 0; i < 3; i++) {
             int levelNumber = i + 1;
@@ -127,7 +127,7 @@ public class RollerCoasterUI extends Application {
                     BORDER_SOFT, BorderStrokeStyle.SOLID, new CornerRadii(10), new BorderWidths(1))));
             card.setCursor(Cursor.HAND);
 
-            Label numLabel = new Label("LEVEL " + levelNumber);
+            Label numLabel  = new Label("LEVEL " + levelNumber);
             numLabel.setFont(Font.font("Courier New", FontWeight.BOLD, 11));
             numLabel.setTextFill(colors[i]);
 
@@ -163,12 +163,12 @@ public class RollerCoasterUI extends Application {
                 BACKGROUND_DARK, CornerRadii.EMPTY, Insets.EMPTY)));
 
         // build cart and track fresh for each level
-        Cart.Material material = new Cart.Material(objMaterial, 0.2f);
-        Vector2D position = new Vector2D(0, 0);
-        Vector2D velocity = new Vector2D((float) initVelocity, 0f);
-        Vector2D acceleration = new Vector2D(0, 0);
-        Cart.cartState state = new Cart.cartState(position, velocity, acceleration);
-        Cart cart = new Cart(mass, initVelocity, objShape, material, state);
+        Cart.Material  material     = new Cart.Material(objMaterial, 0.2f);
+        Vector2D       position     = new Vector2D(0, 0);
+        Vector2D       velocity     = new Vector2D((float) initVelocity, 0f);
+        Vector2D       acceleration = new Vector2D(0, 0);
+        Cart.cartState state        = new Cart.cartState(position, velocity, acceleration);
+        Cart  cart  = new Cart(mass, initVelocity, objShape, material, state);
         Track track = new Track(objMaterial);
 
         // clear the shared charts before starting a new level
@@ -179,22 +179,29 @@ public class RollerCoasterUI extends Application {
         chartEnergy.update(empty);
 
         // route to the correct level class
-        Pane simView;
+        Pane     simView;
         Runnable stopFn;
 
         if (level == 2) {
             Level2Test lt2 = new Level2Test(cart, track,
                     chartPos, chartVel, chartAcc, chartEnergy);
-            SimPanel sp2 = new SimPanel(cart, track, new LevelTestAdapter(lt2));
+            SimPanel sp2 = new SimPanel(cart, track, new LevelTestAdapter2(lt2));
             simView = lt2.getView();
-            stopFn = lt2::stop;
+            stopFn  = lt2::stop;
             root.setLeft(sp2.createPanel());
+        } else if (level == 3) {
+            Level3Test lt3 = new Level3Test(cart, track,
+                    chartPos, chartVel, chartAcc, chartEnergy);
+            SimPanel sp3 = new SimPanel(cart, track, new LevelTestAdapter3(lt3));
+            simView = lt3.getView();
+            stopFn  = lt3::stop;
+            root.setLeft(sp3.createPanel());
         } else {
             LevelTest lt1 = new LevelTest(cart, track,
                     chartPos, chartVel, chartAcc, chartEnergy);
             SimPanel sp1 = new SimPanel(cart, track, lt1);
             simView = lt1.getView();
-            stopFn = lt1::stop;
+            stopFn  = lt1::stop;
             root.setLeft(sp1.createPanel());
         }
 
@@ -209,10 +216,7 @@ public class RollerCoasterUI extends Application {
                 new BorderWidths(0, 0, 3, 0))));
 
         Button backButton = makeButton("LEVELS", 12, 8, 18);
-        backButton.setOnAction(e -> {
-            stopFn.run();
-            goToLevelSelect();
-        });
+        backButton.setOnAction(e -> { stopFn.run(); goToLevelSelect(); });
 
         Label levelLabel = new Label("LEVEL " + level);
         levelLabel.setFont(Font.font("Courier New", FontWeight.BOLD, 14));
@@ -261,10 +265,49 @@ public class RollerCoasterUI extends Application {
         formulas.setTextFill(TEXT_DIM);
         formulas.setWrapText(true);
 
-        Label vectorKey = new Label(
-                "Green  = velocity\nRed    = gravity\nYellow = normal\nOrange = friction");
-        vectorKey.setFont(Font.font("Courier New", 11));
-        vectorKey.setTextFill(TEXT_LIGHT);
+        // vector legend — one row per force with a small colored line + label
+        Label vectorTitle = new Label("VECTORS");
+        vectorTitle.setFont(Font.font("Courier New", FontWeight.BOLD, 11));
+        vectorTitle.setTextFill(TEXT_CYAN);
+
+        VBox vectorKey = new VBox(6);
+        vectorKey.setPadding(new Insets(4, 0, 0, 0));
+
+        String[][] vectors = {
+                { "#00C850", "velocity" },
+                { "#DC3232", "gravity"  },
+                { "#FFD700", "normal"   },
+                { "#FF8C00", "friction" },
+                { "#C850DC", "centripetal (Fc)" }
+        };
+        for (String[] v : vectors) {
+            HBox row = new HBox(8);
+            row.setAlignment(javafx.geometry.Pos.CENTER_LEFT);
+
+            // small colored line
+            javafx.scene.shape.Line line = new javafx.scene.shape.Line(0, 0, 22, 0);
+            line.setStroke(Color.web(v[0]));
+            line.setStrokeWidth(3);
+
+            // arrowhead triangle
+            javafx.scene.shape.Polygon arrow = new javafx.scene.shape.Polygon(
+                    22.0, 0.0,
+                    15.0, -4.0,
+                    15.0,  4.0
+            );
+            arrow.setFill(Color.web(v[0]));
+
+            javafx.scene.layout.StackPane lineGroup = new javafx.scene.layout.StackPane(line, arrow);
+            lineGroup.setPrefWidth(28);
+            lineGroup.setMaxWidth(28);
+
+            Label lbl = new Label(v[1]);
+            lbl.setFont(Font.font("Courier New", 11));
+            lbl.setTextFill(Color.web(v[0]));
+
+            row.getChildren().addAll(lineGroup, lbl);
+            vectorKey.getChildren().add(row);
+        }
 
         Region divider = new Region();
         divider.setPrefHeight(1);
@@ -272,7 +315,7 @@ public class RollerCoasterUI extends Application {
         divider.setBackground(new Background(new BackgroundFill(
                 Color.rgb(40, 70, 130), CornerRadii.EMPTY, Insets.EMPTY)));
 
-        infoPanel.getChildren().addAll(formulaTitle, formulas, divider, vectorKey);
+        infoPanel.getChildren().addAll(formulaTitle, formulas, divider, vectorTitle, vectorKey);
         root.setRight(infoPanel);
 
         stage.setScene(new Scene(root, 1280, 900));
