@@ -86,11 +86,149 @@ public class RollerCoasterUI extends Application {
         HBox buttonRow = new HBox(20, playButton, exitButton);
         buttonRow.setAlignment(Pos.CENTER);
 
-        playButton.setOnAction(e -> goToLevelSelect());
+        playButton.setOnAction(e -> showInstructions());
         exitButton.setOnAction(e -> stage.close());
 
         root.getChildren().addAll(title, subtitle, edition, authors, buttonRow);
         stage.setScene(new Scene(root, 1280, 800));
+    }
+
+    private void showInstructions() {
+        // ── modal instruction window ──────────────────────────────
+        javafx.stage.Stage popup = new javafx.stage.Stage();
+        popup.initModality(javafx.stage.Modality.APPLICATION_MODAL);
+        popup.initOwner(stage);
+        popup.setTitle("How to Play");
+        popup.setResizable(false);
+
+        VBox root = new VBox(0);
+        root.setBackground(new Background(new BackgroundFill(
+                BACKGROUND_DARK, CornerRadii.EMPTY, Insets.EMPTY)));
+
+        // ── header bar ────────────────────────────────────────────
+        HBox header = new HBox();
+        header.setAlignment(Pos.CENTER);
+        header.setPadding(new Insets(22, 30, 18, 30));
+        header.setBackground(new Background(new BackgroundFill(
+                BACKGROUND_PANEL, CornerRadii.EMPTY, Insets.EMPTY)));
+        header.setBorder(new Border(new BorderStroke(
+                ACCENT_BLUE, BorderStrokeStyle.SOLID,
+                CornerRadii.EMPTY, new BorderWidths(0, 0, 3, 0))));
+
+        Label title = new Label("HOW TO PLAY");
+        title.setFont(Font.font("Georgia", FontWeight.BOLD, 26));
+        title.setTextFill(ACCENT_BLUE);
+        header.getChildren().add(title);
+
+        // ── body ──────────────────────────────────────────────────
+        VBox body = new VBox(20);
+        body.setPadding(new Insets(28, 36, 28, 36));
+
+        // general instructions
+        Label genTitle = new Label("GENERAL");
+        genTitle.setFont(Font.font("Courier New", FontWeight.BOLD, 13));
+        genTitle.setTextFill(TEXT_CYAN);
+
+        Label genText = new Label(
+                "1. Set the mass, initial velocity and track material\n" +
+                        "   in the left panel before starting.\n\n" +
+                        "2. Press PLAY to launch the ball and RESET to try again\n" +
+                        "   with different settings.\n\n" +
+                        "3. Watch the force arrows on the ball and the live\n" +
+                        "   graphs at the bottom update in real time.\n\n" +
+                        "4. The simulation stops automatically when the ball\n" +
+                        "   reaches the finish or comes to a complete stop.");
+        genText.setFont(Font.font("Courier New", 12));
+        genText.setTextFill(TEXT_LIGHT);
+        genText.setWrapText(true);
+
+        // divider
+        Region div1 = makeDivider();
+
+        // level descriptions
+        Label lvlTitle = new Label("LEVELS");
+        lvlTitle.setFont(Font.font("Courier New", FontWeight.BOLD, 13));
+        lvlTitle.setTextFill(TEXT_CYAN);
+
+        // level 1
+        VBox lv1 = makeLevelCard(
+                "LEVEL 1 — Straight Ramp",
+                TEXT_CYAN,
+                "A ball rolls down a straight inclined ramp.\n" +
+                        "Observe how gravity, normal force and friction\n" +
+                        "affect speed and energy as the ball descends.");
+
+        // level 2
+        VBox lv2 = makeLevelCard(
+                "LEVEL 2 — Parabola",
+                ACCENT_BLUE,
+                "The track follows a parabolic curve.\n" +
+                        "The slope angle changes constantly — watch how\n" +
+                        "the normal force and acceleration vary along the path.");
+
+        // level 3
+        VBox lv3 = makeLevelCard(
+                "LEVEL 3 — Loop",
+                BORDER_SOFT,
+                "A slope leads into a full vertical loop.\n" +
+                        "The ball must have enough speed to complete the loop.\n" +
+                        "If v² < g×r at the top, it rolls back down.\n" +
+                        "The purple Fc arrow shows centripetal force.");
+
+        Region div2 = makeDivider();
+
+        // close button
+        Button closeBtn = makeButton("LET'S GO!", 14, 10, 36);
+        closeBtn.setOnAction(e -> { popup.close(); goToLevelSelect(); });
+
+        HBox btnRow = new HBox(closeBtn);
+        btnRow.setAlignment(Pos.CENTER);
+
+        body.getChildren().addAll(
+                genTitle, genText, div1,
+                lvlTitle, lv1, lv2, lv3, div2,
+                btnRow);
+
+        javafx.scene.control.ScrollPane scroll =
+                new javafx.scene.control.ScrollPane(body);
+        scroll.setFitToWidth(true);
+        scroll.setStyle("-fx-background: transparent; -fx-background-color: transparent;");
+        scroll.setPrefHeight(520);
+
+        root.getChildren().addAll(header, scroll);
+        popup.setScene(new javafx.scene.Scene(root, 620, 640));
+        popup.showAndWait();
+    }
+
+    private VBox makeLevelCard(String title, Color titleColor, String desc) {
+        VBox card = new VBox(6);
+        card.setPadding(new Insets(14, 18, 14, 18));
+        card.setBackground(new Background(new BackgroundFill(
+                BACKGROUND_PANEL, new CornerRadii(8), Insets.EMPTY)));
+        card.setBorder(new Border(new BorderStroke(
+                BACKGROUND_CARD, BorderStrokeStyle.SOLID,
+                new CornerRadii(8), new BorderWidths(1))));
+
+        Label t = new Label(title);
+        t.setFont(Font.font("Courier New", FontWeight.BOLD, 12));
+        t.setTextFill(titleColor);
+
+        Label d = new Label(desc);
+        d.setFont(Font.font("Courier New", 11));
+        d.setTextFill(TEXT_LIGHT);
+        d.setWrapText(true);
+
+        card.getChildren().addAll(t, d);
+        return card;
+    }
+
+    private Region makeDivider() {
+        Region div = new Region();
+        div.setPrefHeight(1);
+        div.setMaxWidth(Double.MAX_VALUE);
+        div.setBackground(new Background(new BackgroundFill(
+                Color.rgb(40, 70, 130), CornerRadii.EMPTY, Insets.EMPTY)));
+        return div;
     }
 
     private void goToLevelSelect() {
