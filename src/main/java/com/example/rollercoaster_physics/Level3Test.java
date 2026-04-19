@@ -149,7 +149,9 @@ public class Level3Test {
                     stop();
                 }
                 // stop if ball is barely moving — same condition as finish line
-                if (Math.abs(cart.getState().velocity.x) < 0.01f) {
+                double posPx = cart.getState().position.x * PIXELS_PER_METER;
+                boolean onExit = posPx > SLOPE_LEN_PX + LOOP_CIRC_PX;
+                if (onExit && Math.abs(cart.getState().velocity.x) < 0.01f) {
                     cart.getState().velocity.x     = 0;
                     cart.getState().acceleration.x = 0;
                     stop();

@@ -66,7 +66,7 @@ public class PhysicsEngine {
 
         // Level 2 — parabola (slopeAngle = 0)
         double trackXStart  = 60;
-        double trackXEnd    = 890;
+        double trackXEnd    = 790;
         double trackMidX    = (trackXStart + trackXEnd) / 2.0;
         double trackBottomY = 340;
         double trackLeftY   = 90;

@@ -23,9 +23,6 @@ public class LevelTestAdapter3 extends LevelTest{
         this.level3 = level3;
     }
 
-    public LevelTestAdapter3(Cart cart, Track track, ChartPosition chartPosition, ChartVelocity chartVelocity, ChartAcceleration chartAcceleration, ChartEnergy chartEnergy) {
-        super(cart, track, chartPosition, chartVelocity, chartAcceleration, chartEnergy);
-    }
 
     @Override public void start()               { level3.start();                }
     @Override public void stop()                { level3.stop();                 }

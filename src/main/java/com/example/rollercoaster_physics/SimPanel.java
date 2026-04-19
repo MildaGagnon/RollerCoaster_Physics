@@ -221,7 +221,7 @@ public class SimPanel {
         if (track.getSlopeAngle() == 0) {
             // Level 2 — parabola
             double trackXStart  = 60;
-            double trackXEnd    = 890;
+            double trackXEnd    = 790;
             double trackMidX    = (trackXStart + trackXEnd) / 2.0;
             double trackBottomY = 340;
             double trackLeftY   = 90;
