@@ -130,9 +130,16 @@ public class Level3Test {
                             && angleInLoop < Math.PI * 1.35;
                     double v = cart.getState().velocity.x;
                     double r = LOOP_RADIUS / PIXELS_PER_METER;
+                    // near top: not enough centripetal force
                     if (nearTop && v * v < 9.81 * r) {
                         ballFell = true;
-                        cart.getState().velocity.x = -(float) Math.sqrt(9.81 * r);
+                        double rollbackSpeed = Math.max(Math.abs(v), Math.sqrt(9.81 * r)) + 1.0;
+                        cart.getState().velocity.x = -(float) rollbackSpeed;
+                    }
+                    // anywhere in loop: ball stopped due to high friction
+                    if (Math.abs(v) < 0.05f) {
+                        ballFell = true;
+                        cart.getState().velocity.x = -(float)(Math.sqrt(9.81 * r) * 0.6);
                     }
                 }
 
