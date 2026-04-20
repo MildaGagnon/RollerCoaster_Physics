@@ -10,25 +10,28 @@ import javafx.scene.text.Text;
 
 import java.util.ArrayList;
 
+// live velocity vs time graph — green curve
 public class ChartVelocity {
 
-    private static final double W = 175;
-    private static final double H = 100;
-    private static final double LEFT   = 28;
+    // chart area boundaries in pixels
+    private static final double W      = 175;
+    private static final double H      = 100;
+    private static final double LEFT   = 28;    // left margin for y-axis labels
     private static final double BOTTOM = H - 8;
     private static final double RIGHT  = W - 6;
-    private static final double TOP    = 14;
+    private static final double TOP    = 14;    // below title text
+
     private Pane     pane;
-    private Polyline line;
-    private Text     maxLabel;
-    private Text     minLabel;
-    private Line     zeroLine;
+    private Polyline line;       // velocity curve, redrawn every frame
+    private Text     maxLabel;   // top y-axis value
+    private Text     minLabel;   // bottom y-axis value
+    private Line     zeroLine;   // dashed v=0 reference, visible only when ball rolls backward
 
     public ChartVelocity() {
         pane = new Pane();
         pane.setPrefSize(W, H);
 
-        Rectangle bg = new Rectangle(0, 0, W, H);
+        Rectangle bg = new Rectangle(0, 0, W, H);   // white chart background
         bg.setFill(Color.WHITE);
         bg.setStroke(Color.rgb(180, 180, 200));
         bg.setStrokeWidth(0.5);
@@ -37,30 +40,29 @@ public class ChartVelocity {
         title.setFill(Color.rgb(30, 50, 100));
         title.setFont(Font.font("Courier New", 10));
 
-        Line yAxis = new Line(LEFT, TOP, LEFT, BOTTOM);
+        Line yAxis = new Line(LEFT, TOP, LEFT, BOTTOM);     // vertical axis
         yAxis.setStroke(Color.rgb(100, 100, 120));
         yAxis.setStrokeWidth(0.8);
 
-        Line xAxis = new Line(LEFT, BOTTOM, RIGHT, BOTTOM);
+        Line xAxis = new Line(LEFT, BOTTOM, RIGHT, BOTTOM); // horizontal time axis
         xAxis.setStroke(Color.rgb(100, 100, 120));
         xAxis.setStrokeWidth(0.8);
 
-        // zero reference line — shown when there are negative values
-        zeroLine = new Line(LEFT, BOTTOM, RIGHT, BOTTOM);
+        zeroLine = new Line(LEFT, BOTTOM, RIGHT, BOTTOM);  // starts hidden at bottom
         zeroLine.setStroke(Color.rgb(180, 180, 200));
         zeroLine.setStrokeWidth(0.8);
-        zeroLine.getStrokeDashArray().addAll(4.0, 3.0);
+        zeroLine.getStrokeDashArray().addAll(4.0, 3.0);    // dashed pattern
         zeroLine.setVisible(false);
 
-        maxLabel = new Text(2, TOP + 6, "");
+        maxLabel = new Text(2, TOP + 6, "");    // top of y-axis, updated each frame
         maxLabel.setFill(Color.rgb(80, 80, 100));
         maxLabel.setFont(Font.font("Courier New", 8));
 
-        minLabel = new Text(2, BOTTOM, "0");
+        minLabel = new Text(2, BOTTOM, "0");    // bottom of y-axis
         minLabel.setFill(Color.rgb(80, 80, 100));
         minLabel.setFont(Font.font("Courier New", 8));
 
-        line = new Polyline();
+        line = new Polyline();                  // green velocity curve
         line.setStroke(Color.rgb(0, 170, 70));
         line.setStrokeWidth(1.5);
         line.setFill(null);
@@ -71,6 +73,7 @@ public class ChartVelocity {
 
     public Pane getPane() { return pane; }
 
+    // redraws the curve each frame using all stored velocity values
     public void update(MotionData data) {
         line.getPoints().clear();
         ArrayList<Double> yValues = data.getVelocities();
@@ -79,6 +82,7 @@ public class ChartVelocity {
             zeroLine.setVisible(false); return;
         }
 
+        // scan for min and max in the current data window
         double maxVal = yValues.get(0);
         double minVal = yValues.get(0);
         for (double v : yValues) {
@@ -86,26 +90,29 @@ public class ChartVelocity {
             if (v < minVal) minVal = v;
         }
 
-        // always include 0 in the range
+        // clamp range to always include 0 so axis never floats
         maxVal = Math.max(maxVal, 0);
         minVal = Math.min(minVal, 0);
         double range = maxVal - minVal;
-        if (range == 0) range = 1;
+        if (range == 0) range = 1; // avoid division by zero when all values are equal
 
         maxLabel.setText(String.format("%.1f", maxVal));
         minLabel.setText(String.format("%.1f", minVal));
 
-        double chartW = RIGHT - LEFT;
-        double chartH = BOTTOM - TOP;
+        double chartW = RIGHT - LEFT;  // usable plot width
+        double chartH = BOTTOM - TOP;  // usable plot height
 
-        // draw dashed zero line when there are negative values
+        // show zero line only when negative velocities exist
         boolean hasNegative = minVal < -0.05;
         zeroLine.setVisible(hasNegative);
         if (hasNegative) {
+            // position zero line proportionally between min and max
             double zeroY = BOTTOM - ((0 - minVal) / range) * chartH;
-            zeroLine.setStartY(zeroY); zeroLine.setEndY(zeroY);
+            zeroLine.setStartY(zeroY);
+            zeroLine.setEndY(zeroY);
         }
 
+        // map each value to pixel coordinates and plot
         for (int i = 0; i < yValues.size(); i++) {
             double x = LEFT + (double) i / (yValues.size() - 1) * chartW;
             double y = BOTTOM - ((yValues.get(i) - minVal) / range) * chartH;

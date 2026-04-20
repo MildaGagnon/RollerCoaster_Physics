@@ -1,6 +1,5 @@
 package com.example.rollercoaster_physics;
-import com.example.rollercoaster_physics.Cart;
-import com.example.rollercoaster_physics.Track;
+
 public class PhysicsEngine {
 
     private static final float G = 9.81f;
@@ -21,14 +20,12 @@ public class PhysicsEngine {
 
     private static final double L3_SLOPE_LEN;
     private static final double L3_LOOP_CIRC;
-    private static final double L3_EXIT_LEN;
 
     static {
         L3_SLOPE_LEN = Math.sqrt(
                 (L3_SLOPE_END_X - L3_SLOPE_START_X) * (L3_SLOPE_END_X - L3_SLOPE_START_X) +
                         (L3_SLOPE_END_Y - L3_SLOPE_START_Y) * (L3_SLOPE_END_Y - L3_SLOPE_START_Y));
         L3_LOOP_CIRC = 2 * Math.PI * L3_LOOP_RADIUS;
-        L3_EXIT_LEN  = L3_EXIT_END_X - L3_EXIT_START_X;
     }
 
     private Cart  cart;
@@ -90,24 +87,6 @@ public class PhysicsEngine {
         return (float) Math.atan2(dy_dx, 1.0);
     }
 
-    public float getGravityForce() {
-        float angle = getCurrentAngleRad();
-        return (float)(cart.getMass() * G * Math.sin(angle));
-    }
-
-    public float getNormalForce() {
-        float angle = getCurrentAngleRad();
-        return (float)(cart.getMass() * G * Math.abs(Math.cos(angle)));
-    }
-
-    public float getFrictionForce() {
-        float mu  = track.getFrictionCoeff();
-        float N   = getNormalForce();
-        float vel = cart.getState().velocity.x;
-        if (vel >  0.01f) return -mu * N;
-        if (vel < -0.01f) return  mu * N;
-        return 0;
-    }
 
     public void update(float dt) {
         Cart.cartState state = cart.getState();

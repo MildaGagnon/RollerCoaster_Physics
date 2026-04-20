@@ -11,10 +11,6 @@ public class Formula {
         this.equation = equation;
     }
 
-    // getters
-    public String getName()     { return name; }
-    public String getEquation() { return equation; }
-
     // returns a nicely formatted single line like "F = m x a"
     public String getDisplay() {
         return name + " = " + equation;

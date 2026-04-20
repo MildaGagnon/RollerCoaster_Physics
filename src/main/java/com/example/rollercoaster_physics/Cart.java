@@ -22,15 +22,11 @@ public class Cart {
     // getters
     public double    getMass()     { return mass; }
     public double    getVelocity() { return velocity; }
-    public String    getShape()    { return shape; }
     public cartState getState()    { return state; }
-    public Material  getMaterial() { return material; }
 
     // setters
     public void setMass(double mass)         { this.mass     = mass; }
     public void setVelocity(double velocity) { this.velocity = velocity; }
-    public void setShape(String shape)       { this.shape    = shape; }
-    public void setMaterial(Material mat)    { this.material = mat; }
 
     // ── inner class: stores position, velocity, acceleration ──────
     public static class cartState {
@@ -59,41 +55,4 @@ public class Cart {
         }
     }
 
-    // ── inner class: shapes ────────────────────────────────────────
-    public static class Shape {
-        String name;
-        float  momentOfInertia;
-
-        public Shape(String name, float momentOfInertia) {
-            this.name            = name;
-            this.momentOfInertia = momentOfInertia;
-        }
-    }
-
-    public static class Sphere extends Shape {
-        float radius;
-        public Sphere(float radius) {
-            super("Sphere", (2f / 5f) * radius * radius);
-            this.radius = radius;
-        }
-    }
-
-    public static class Cylinder extends Shape {
-        float radius;
-        public Cylinder(float radius) {
-            super("Cylinder", (1f / 2f) * radius * radius);
-            this.radius = radius;
-        }
-    }
-
-    public static class RectanglePrism extends Shape {
-        float width;
-        float height;
-        public RectanglePrism(float width, float height) {
-            super("RectanglePrism",
-                    (1f / 12f) * (width * width + height * height));
-            this.width  = width;
-            this.height = height;
-        }
-    }
 }

@@ -64,15 +64,15 @@ public class RollerCoasterUI extends Application {
                 BACKGROUND_DARK, CornerRadii.EMPTY, Insets.EMPTY)));
         root.setPadding(new Insets(70));
 
-        Label title = new Label("ROLLER COASTER");
+        Label title = new Label(MainMenu.getTitle());
         title.setFont(Font.font("Georgia", FontWeight.BOLD, 58));
         title.setTextFill(ACCENT_BLUE);
 
-        Label subtitle = new Label("Physics Simulator");
+        Label subtitle = new Label(MainMenu.getSubtitle());
         subtitle.setFont(Font.font("Georgia", FontPosture.ITALIC, 28));
         subtitle.setTextFill(TEXT_LIGHT);
 
-        Label edition = new Label("[ Educational Physics Engine v1.0 ]");
+        Label edition = new Label(MainMenu.getEdition());
         edition.setFont(Font.font("Courier New", 13));
         edition.setTextFill(TEXT_DIM);
 
