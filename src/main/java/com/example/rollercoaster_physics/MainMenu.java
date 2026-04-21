@@ -1,28 +1,29 @@
 package com.example.rollercoaster_physics;
 
+// static data class — all strings shown on the welcome and level-select screens
 public class MainMenu {
 
-    // the title shown at the top of the welcome screen
+    // welcome screen title
     public static String getTitle() {
         return "ROLLER COASTER";
     }
 
-    // the subtitle shown below the title
+    // welcome screen subtitle
     public static String getSubtitle() {
         return "Physics Simulator";
     }
 
-    // the version tag shown under the subtitle
+    // version tag shown under subtitle
     public static String getEdition() {
         return "[ Educational Physics Engine v1.0 ]";
     }
 
-    // the authors line
+    // authors line
     public static String getAuthors() {
         return "Milda Gagnon  —  Matias Leheudre  —  Isaiah Sassi";
     }
 
-    // the names of all three levels (used on the level-select screen)
+    // level names for the level-select cards — pulled from each Level class
     public static String[] getLevelNames() {
         String[] names = new String[3];
         names[0] = Level1.getName();
@@ -31,7 +32,7 @@ public class MainMenu {
         return names;
     }
 
-    // the descriptions of all three levels
+    // level descriptions for the level-select cards
     public static String[] getLevelDescriptions() {
         String[] descriptions = new String[3];
         descriptions[0] = Level1.getDescription();

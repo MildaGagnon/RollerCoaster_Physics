@@ -2,12 +2,13 @@ package com.example.rollercoaster_physics;
 
 import javafx.scene.layout.Pane;
 
+// wraps Level2Test so SimPanel can treat it as a LevelTest
 public class LevelTestAdapter2 extends LevelTest {
 
     private Level2Test level2;
 
     public LevelTestAdapter2(Level2Test level2) {
-        super(
+        super( // dummy LevelTest — never used, only level2 is
                 new Cart(5, 8, "Sphere",
                         new Cart.Material("Metal", 0.2f),
                         new Cart.cartState(

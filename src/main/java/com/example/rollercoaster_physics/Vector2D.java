@@ -1,5 +1,7 @@
 package com.example.rollercoaster_physics;
 
+
+// 2D vector — stores x and y components as floats
 public class Vector2D {
 
     public float x;

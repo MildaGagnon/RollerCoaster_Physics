@@ -1,29 +1,26 @@
 package com.example.rollercoaster_physics;
 
+// holds track properties used by PhysicsEngine each frame
 public class Track {
 
-    // attributes
-    private float  frictionCoeff;
-    private float  slopeAngle;
+    private float frictionCoeff; // μ — set by SimPanel material buttons
+    private float slopeAngle;    // degrees: >0 = Level1, 0 = Level2, -1 = Level3
 
-    // full constructor
+    // full constructor — used when both values are known upfront
     public Track(float frictionCoeff, float slopeAngle) {
         this.frictionCoeff = frictionCoeff;
         this.slopeAngle    = slopeAngle;
     }
 
-    // constructor used by RollerCoasterUI — now sets safe defaults
+    // default constructor — slopeAngle overridden by Level.setup()
     public Track(String material) {
-        this.frictionCoeff = 0.10f;  // smooth by default
-        this.slopeAngle    = 0f;     // Level1.setup() will override this
+        this.frictionCoeff = 0.10f; // smooth default
+        this.slopeAngle    = 0f;    // overridden by Level1/2/3.setup()
     }
 
-    // getters
-    public float  getFrictionCoeff() { return frictionCoeff; }
-    public float  getSlopeAngle()    { return slopeAngle; }
+    public float getFrictionCoeff() { return frictionCoeff; }
+    public float getSlopeAngle()    { return slopeAngle; }
 
-    // setters
     public void setFrictionCoeff(float frictionCoeff) { this.frictionCoeff = frictionCoeff; }
     public void setSlopeAngle(float slopeAngle)       { this.slopeAngle    = slopeAngle; }
-
 }

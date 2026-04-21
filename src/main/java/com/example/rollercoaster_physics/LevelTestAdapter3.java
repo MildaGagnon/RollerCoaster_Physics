@@ -2,12 +2,13 @@ package com.example.rollercoaster_physics;
 
 import javafx.scene.layout.Pane;
 
-public class LevelTestAdapter3 extends LevelTest{
+// wraps Level3Test so SimPanel can treat it as a LevelTest
+public class LevelTestAdapter3 extends LevelTest {
 
     private Level3Test level3;
 
     public LevelTestAdapter3(Level3Test level3) {
-        super(
+        super( // dummy LevelTest — never used, only level3 is
                 new Cart(5, 8, "Sphere",
                         new Cart.Material("Metal", 0.2f),
                         new Cart.cartState(
@@ -22,7 +23,6 @@ public class LevelTestAdapter3 extends LevelTest{
         );
         this.level3 = level3;
     }
-
 
     @Override public void start()               { level3.start();                }
     @Override public void stop()                { level3.stop();                 }
