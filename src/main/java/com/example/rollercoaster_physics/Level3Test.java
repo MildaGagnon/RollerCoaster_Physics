@@ -26,7 +26,7 @@ public class Level3Test {
     private static final double SLOPE_END_X   = LOOP_CENTER_X - LOOP_RADIUS; // 310 — left tangent
     private static final double SLOPE_END_Y   = LOOP_BOTTOM_Y;               // 350
 
-    private static final double EXIT_START_X  = LOOP_CENTER_X; // right tangent
+    private static final double EXIT_START_X  = LOOP_CENTER_X + LOOP_RADIUS; // right tangent point where loop meets flat exit
     private static final double EXIT_END_X    = 750;
     private static final double EXIT_Y        = LOOP_BOTTOM_Y; // 350 — flat ground
 

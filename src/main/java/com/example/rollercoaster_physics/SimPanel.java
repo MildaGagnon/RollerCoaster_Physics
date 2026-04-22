@@ -68,7 +68,12 @@ public class SimPanel {
             double v = n.doubleValue();
             velLabel.setText("Init. velocity: " + String.format("%.1f", v) + " m/s");
             cart.setVelocity(v);
-            cart.getState().velocity.x = (float) v; // also update live state
+            // Level 2 stores velocity as px/s; Levels 1 and 3 use m/s
+            if (track.getSlopeAngle() == 0) {
+                cart.getState().velocity.x = (float)(v * 2.5); // convert m/s to px/s for Level 2
+            } else {
+                cart.getState().velocity.x = (float) v;
+            }
         });
         box.getChildren().addAll(velLabel, velSlider);
 
@@ -121,9 +126,11 @@ public class SimPanel {
                 } else {
                     // simulation not started yet — compute from current state
                     double v = cart.getState().velocity.x;
+                    // Level 2 stores velocity as px/s — convert back to m/s for KE
+                    double vMs = (track.getSlopeAngle() == 0) ? v / 2.5 : v;
                     double m = cart.getMass();
                     double h = getHeight();
-                    ke = 0.5 * m * v * v; // KE = ½mv²
+                    ke = 0.5 * m * vMs * vMs; // KE = ½mv²
                     pe = m * 9.81 * h;    // PE = mgh
                     te = ke + pe;
                 }
@@ -195,19 +202,9 @@ public class SimPanel {
                     / ((trackMidX - trackXStart) * (trackMidX - trackXStart));
             double pixelsPerMeter = 2.5;
 
-            double pixels = cart.getState().position.x * pixelsPerMeter;
-            double x = trackXStart;
-            double accumulated = 0;
-            double step = 0.5;
-            while (x < trackXEnd) {
-                double y1     = trackBottomY + A * (x - trackMidX) * (x - trackMidX);
-                double y2     = trackBottomY + A * (x + step - trackMidX) * (x + step - trackMidX);
-                double segLen = Math.sqrt(step * step + (y2 - y1) * (y2 - y1)); // Pythagoras
-                if (accumulated + segLen >= pixels) break;
-                accumulated += segLen;
-                x += step;
-            }
-            double screenY  = trackBottomY + A * (x - trackMidX) * (x - trackMidX);
+            // position.x is stored as screen X for Level 2 — use it directly
+            double x      = Math.min(Math.max(cart.getState().position.x, trackXStart), trackXEnd);
+            double screenY = trackBottomY + A * (x - trackMidX) * (x - trackMidX);
             double heightPx = trackBottomY - screenY; // positive above valley
             if (heightPx < 0) heightPx = 0;
             return heightPx / pixelsPerMeter;

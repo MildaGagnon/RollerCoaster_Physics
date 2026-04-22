@@ -1,33 +1,43 @@
 package com.example.rollercoaster_physics;
 
-// computes forces and advances the cart state each frame
+// PhysicsEngine calculates how the cart moves each frame.
+// It uses only three basic physics formulas:
+//
+//   1. Acceleration on a slope:  a = g*sin(angle) - mu*g*cos(angle)
+//   2. Velocity update:          v = v + a * dt
+//   3. Position update:          x = x + v * dt
+//
+// The only thing that changes between levels is how we find the slope angle.
+// Once we have the angle, the same three formulas apply to all levels.
+
 public class PhysicsEngine {
 
-    private static final float G = 9.81f; // m/s²
+    private static final float G = 9.81f; // gravity in m/s²
 
-    // Level 3 constants — must match Level3Test and SimPanel exactly
-    private static final double L3_LOOP_RADIUS   = 90;
-    private static final double L3_LOOP_CENTER_X = 400;
-    private static final double L3_LOOP_CENTER_Y = 260;
-    private static final double L3_LOOP_BOTTOM_Y = L3_LOOP_CENTER_Y + L3_LOOP_RADIUS; // 350
-    private static final double L3_SLOPE_START_X = 60;
-    private static final double L3_SLOPE_START_Y = 140;
-    private static final double L3_SLOPE_END_X   = L3_LOOP_CENTER_X - L3_LOOP_RADIUS; // 310
-    private static final double L3_SLOPE_END_Y   = L3_LOOP_BOTTOM_Y;                  // 350
-    private static final double L3_EXIT_START_X  = L3_LOOP_CENTER_X + L3_LOOP_RADIUS; // 490
-    private static final double L3_EXIT_END_X    = 750;
-    private static final double L3_EXIT_Y        = L3_LOOP_BOTTOM_Y;
-    private static final double L3_PPM           = 35; // pixels per metre
+    // Level 2 parabola constants — must match Level2Test exactly
+    private static final double L2_TRACK_X_START  = 60;
+    private static final double L2_TRACK_X_END    = 790;
+    private static final double L2_TRACK_MID_X    = (L2_TRACK_X_START + L2_TRACK_X_END) / 2.0;
+    private static final double L2_TRACK_BOTTOM_Y = 340;
+    private static final double L2_TRACK_LEFT_Y   = 90;
+    // A is the parabola coefficient: how curved the track is
+    private static final double L2_A = (L2_TRACK_LEFT_Y - L2_TRACK_BOTTOM_Y)
+            / ((L2_TRACK_MID_X - L2_TRACK_X_START) * (L2_TRACK_MID_X - L2_TRACK_X_START));
+    private static final double L2_PPM = 2.5; // pixels per metre for Level 2
 
-    // pre-computed segment lengths
-    private static final double L3_SLOPE_LEN; // straight-line slope length in pixels
-    private static final double L3_LOOP_CIRC; // full circumference = 2πr
+    // Level 3 constants — must match Level3Test exactly
+    private static final double L3_SLOPE_LEN;   // slope length in pixels (computed once below)
+    private static final double L3_LOOP_RADIUS  = 90;
+    private static final double L3_LOOP_CIRC    = 2 * Math.PI * L3_LOOP_RADIUS; // = 2πr
+    private static final double L3_SLOPE_START_X = 60,  L3_SLOPE_START_Y = 140;
+    private static final double L3_SLOPE_END_X   = 310, L3_SLOPE_END_Y   = 350;
+    private static final double L3_PPM           = 35;  // pixels per metre for Level 3
 
     static {
+        // Pythagoras to get the straight-line slope length once at startup
         L3_SLOPE_LEN = Math.sqrt(
                 (L3_SLOPE_END_X - L3_SLOPE_START_X) * (L3_SLOPE_END_X - L3_SLOPE_START_X) +
-                        (L3_SLOPE_END_Y - L3_SLOPE_START_Y) * (L3_SLOPE_END_Y - L3_SLOPE_START_Y)); // Pythagoras
-        L3_LOOP_CIRC = 2 * Math.PI * L3_LOOP_RADIUS;
+                        (L3_SLOPE_END_Y - L3_SLOPE_START_Y) * (L3_SLOPE_END_Y - L3_SLOPE_START_Y));
     }
 
     private Cart  cart;
@@ -38,88 +48,118 @@ public class PhysicsEngine {
         this.track = track;
     }
 
-    // returns slope angle in radians at the ball's current position
-    // branches on slopeAngle: >0 = Level1, <0 = Level3, 0 = Level2
+    // -------------------------------------------------------------------------
+    // getCurrentAngleRad()
+    //
+    // Returns the slope angle (in radians) at the cart's current position.
+    // We use track.getSlopeAngle() as a level flag:
+    //   slopeAngle > 0  →  Level 1 (straight ramp, fixed angle)
+    //   slopeAngle = 0  →  Level 2 (parabola, exact angle from derivative)
+    //   slopeAngle < 0  →  Level 3 (slope into loop, three zones)
+    // -------------------------------------------------------------------------
     private float getCurrentAngleRad() {
-        float storedAngle = track.getSlopeAngle();
 
-        // Level 1 — fixed ramp angle
-        if (storedAngle > 0) {
-            return (float) Math.toRadians(storedAngle);
+        float slopeAngle = track.getSlopeAngle();
+
+        // ── LEVEL 1: straight ramp ────────────────────────────────────────────
+        // Fixed angle the whole way down — just convert degrees to radians.
+        if (slopeAngle > 0) {
+            return (float) Math.toRadians(slopeAngle);
         }
 
-        // Level 3 — 3-segment track: slope → loop → flat exit
-        if (storedAngle < 0) {
+        // ── LEVEL 3: slope → loop → flat exit ────────────────────────────────
+        // Track is split into three zones; each zone has its own angle.
+        if (slopeAngle < 0) {
+            // cart position is stored in metres; convert to pixels to find the zone
             double px = cart.getState().position.x * L3_PPM;
+
+            // Zone 1 — downhill slope: fixed angle from start point to loop entrance
             if (px <= L3_SLOPE_LEN) {
                 return (float) Math.atan2(
                         L3_SLOPE_END_Y - L3_SLOPE_START_Y,
                         L3_SLOPE_END_X - L3_SLOPE_START_X); // fixed slope angle
             }
-            px -= L3_SLOPE_LEN;
-            if (px <= L3_LOOP_CIRC) {
-                double angle = (Math.PI / 2) - (px / L3_LOOP_RADIUS);
-                return (float)(angle - Math.PI / 2); // tangent = radial - 90°
+
+            // Zone 2 — circular loop
+            // Distance into the loop tells us the tangent angle at that point.
+            // Tangent angle = angle around the circle minus 90° (tangent is perpendicular to radius).
+            double distIntoLoop = px - L3_SLOPE_LEN;
+            if (distIntoLoop <= L3_LOOP_CIRC) {
+                double theta = (Math.PI / 2) - (distIntoLoop / L3_LOOP_RADIUS);
+                return (float)(theta - Math.PI / 2); // tangent = radial angle - 90°
             }
-            return 0f; // flat exit
+
+            // Zone 3 — flat exit, no gravity component along the track
+            return 0f;
         }
 
-        // Level 2 — parabola: walk arc to find current x, then compute tangent
-        double trackXStart  = 60;
-        double trackXEnd    = 790;
-        double trackMidX    = (trackXStart + trackXEnd) / 2.0;
-        double trackBottomY = 340;
-        double trackLeftY   = 90;
-        double A = (trackLeftY - trackBottomY)
-                / ((trackMidX - trackXStart) * (trackMidX - trackXStart)); // parabola coefficient
-        double pixelsPerMeter = 2.5;
+        // ── LEVEL 2: parabolic track ──────────────────────────────────────────
+        // position.x for Level 2 is stored as screen X (pixels) not arc metres.
+        // This means when the ball rolls backward, screenX decreases correctly
+        // and we always get the right angle — the energy bug is fixed here.
+        //
+        // The parabola equation is y = L2_A * (x - midX)^2 + BOTTOM_Y
+        // Its derivative dy/dx = 2 * L2_A * (x - midX) gives the exact slope.
+        // angle = arctan(dy/dx) — accurate at every point, in both directions.
+        double screenX = cart.getState().position.x; // stored as screen X for Level 2
+        screenX = Math.max(L2_TRACK_X_START, Math.min(screenX, L2_TRACK_X_END)); // clamp to track
 
-        double pixels = cart.getState().position.x * pixelsPerMeter;
-        double x = trackXStart;
-        double accumulated = 0;
-        double step = 0.5; // 0.5px steps for accuracy
-        while (x < trackXEnd) {
-            double y1     = trackBottomY + A * (x - trackMidX) * (x - trackMidX);
-            double y2     = trackBottomY + A * (x + step - trackMidX) * (x + step - trackMidX);
-            double segLen = Math.sqrt(step * step + (y2 - y1) * (y2 - y1)); // Pythagoras
-            if (accumulated + segLen >= pixels) break;
-            accumulated += segLen;
-            x += step;
-        }
-        double dy_dx = 2.0 * A * (x - trackMidX); // derivative of parabola at x
+        double dy_dx = 2.0 * L2_A * (screenX - L2_TRACK_MID_X);
         return (float) Math.atan2(dy_dx, 1.0);
     }
 
-    // advances position and velocity by one time step dt (seconds)
+    // -------------------------------------------------------------------------
+    // update(dt)
+    //
+    // Moves the cart forward by one time step dt (seconds, usually ~0.016s).
+    //
+    //   Step 1 — gravity along slope:  Fg = m * g * sin(angle)
+    //   Step 2 — normal force:          N = m * g * cos(angle)
+    //   Step 3 — friction force:       Ff = mu * N  (always opposes motion)
+    //   Step 4 — acceleration:          a = (Fg + Ff) / m       →  from F = ma
+    //   Step 5 — update velocity:       v = v + a * dt
+    //   Step 6 — update position:       x = x + v * dt
+    // -------------------------------------------------------------------------
     public void update(float dt) {
         Cart.cartState state = cart.getState();
-        float mass    = (float) cart.getMass();
-        float angle   = getCurrentAngleRad();
-        float mu      = track.getFrictionCoeff();
+        float mass  = (float) cart.getMass();
+        float angle = getCurrentAngleRad();
+        float mu    = track.getFrictionCoeff();
 
-        float gravityAlong = (float)(mass * G * Math.sin(angle)); // component along track
-        float normalForce  = (float)(mass * G * Math.abs(Math.cos(angle))); // perpendicular to track
+        // Step 1 — gravity pulls the cart along the slope: Fg = m*g*sin(angle)
+        float gravityAlong = (float)(mass * G * Math.sin(angle));
 
-        // friction opposes direction of motion
-        float vel = state.velocity.x;
+        // Steps 2 & 3 — normal force and friction: N = m*g*cos(angle), Ff = mu*N
+        // Friction always opposes motion so its sign flips with velocity direction
+        float normalForce = (float)(mass * G * Math.abs(Math.cos(angle)));
         float friction;
-        if      (vel >  0.02f) friction = -mu * normalForce; // moving forward
-        else if (vel < -0.02f) friction =  mu * normalForce; // moving backward
-        else                   friction = 0;
+        if      (state.velocity.x >  0.02f) friction = -mu * normalForce; // moving forward
+        else if (state.velocity.x < -0.02f) friction =  mu * normalForce; // moving backward
+        else                                friction = 0;                  // stopped
 
+        // Step 4 — net force and acceleration: F = ma → a = F/m
         float netForce     = gravityAlong + friction;
-        float acceleration = netForce / mass; // F = ma → a = F/m
+        float acceleration = netForce / mass;
 
-        state.velocity.x     = state.velocity.x + acceleration * dt;
-        state.position.x     = state.position.x + state.velocity.x * dt;
+        // Step 5 — v = v + a * dt
+        state.velocity.x = state.velocity.x + acceleration * dt;
+
+        // Step 6 — x = x + v * dt
+        // For Level 2, velocity is in pixels/s so position stays in screen pixels.
+        // For Levels 1 and 3, velocity is in m/s so position stays in metres.
+        state.position.x = state.position.x + state.velocity.x * dt;
+
+        // save acceleration so the UI can display it
         state.acceleration.x = acceleration;
 
-        if (state.position.x < 0) { // clamp at start — can't go behind origin
+        // cart cannot go behind the starting point
+        if (state.position.x < 0) {
             state.position.x = 0;
             state.velocity.x = 0;
         }
 
-        // stop when nearly stationary on flat ground
+        // stop the cart if it is barely moving on flat ground
+        // prevents tiny rounding errors from jiggling the cart forever
         if (Math.abs(state.velocity.x) < 0.005f && Math.abs(angle) < 0.05f) {
             state.velocity.x     = 0;
             state.acceleration.x = 0;

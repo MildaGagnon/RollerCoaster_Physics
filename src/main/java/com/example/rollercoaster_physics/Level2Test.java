@@ -8,6 +8,7 @@ import javafx.scene.text.Font;
 import javafx.scene.text.FontWeight;
 import javafx.scene.text.Text;
 
+
 // Level 2 — parabolic track
 public class Level2Test {
 
@@ -66,7 +67,7 @@ public class Level2Test {
     private AnimationTimer timer;
     private long   lastTime; // nanoseconds
     private double simTime;  // seconds
-    private double trackLengthMeters; // total arc length of parabola
+    private double trackLengthPixels; // end of track in screen pixels // total arc length of parabola
 
     public Level2Test(Cart cart, Track track,
                       ChartPosition chartPos, ChartVelocity chartVel,
@@ -80,10 +81,15 @@ public class Level2Test {
 
         Level2.setup(track); // slopeAngle=0 signals parabola, friction=0.10
 
+        // position is stored as screen X for Level 2 (not arc metres)
+        // this ensures PhysicsEngine always reads the correct parabola angle
+        cart.getState().position.x = (float) TRACK_X_START;
+        cart.getState().velocity.x = (float)(cart.getVelocity() * PIXELS_PER_METER);
+
         physics    = new PhysicsEngine(cart, track);
         motionData = new MotionData();
 
-        trackLengthMeters = arcLengthPixels() / PIXELS_PER_METER; // pre-computed once
+        trackLengthPixels = TRACK_X_END; // ball stops when it reaches the right end of the track // pre-computed once
 
         simTime  = 0;
         lastTime = 0;
@@ -101,8 +107,8 @@ public class Level2Test {
                 physics.update(dt);
                 simTime = simTime + dt;
 
-                if (cart.getState().position.x >= trackLengthMeters) {
-                    cart.getState().position.x     = (float) trackLengthMeters;
+                if (cart.getState().position.x >= trackLengthPixels) {
+                    cart.getState().position.x     = (float) trackLengthPixels;
                     cart.getState().velocity.x     = 0;
                     cart.getState().acceleration.x = 0;
                     stop();
@@ -112,7 +118,8 @@ public class Level2Test {
                 double a   = cart.getState().acceleration.x;
                 double pos = cart.getState().position.x;
                 double h   = getHeight();
-                double ke  = 0.5 * cart.getMass() * v * v; // KE = ½mv²
+                double vMs = v / PIXELS_PER_METER; // convert px/s back to m/s for energy
+                double ke  = 0.5 * cart.getMass() * vMs * vMs; // KE = ½mv²
                 double pe  = cart.getMass() * 9.81 * h;    // PE = mgh
                 motionData.addPoint(simTime, pos, v, a, ke, pe);
 
@@ -169,7 +176,7 @@ public class Level2Test {
 
     // height above valley bottom — used for PE = mgh
     private double getHeight() {
-        double screenX  = arcDistToScreenX(cart.getState().position.x);
+        double screenX  = cart.getState().position.x; // position is screen X directly
         double screenY  = trackY(screenX);
         double heightPx = TRACK_BOTTOM_Y - screenY; // positive above valley
         if (heightPx < 0) heightPx = 0;
@@ -310,7 +317,7 @@ public class Level2Test {
 
     private void update() {
 
-        double screenX = arcDistToScreenX(cart.getState().position.x);
+        double screenX = cart.getState().position.x; // position is stored as screen X directly
         double screenY = trackY(screenX);
         double angle   = trackAngle(screenX); // changes continuously on parabola
 
@@ -336,7 +343,7 @@ public class Level2Test {
             setArrow(velocityLine, velocityHead, velocityLabel, ballX, ballY,
                     ballX + dir * len * Math.cos(angle),
                     ballY + dir * len * Math.sin(angle));
-            velocityLabel.setText("v=" + String.format("%.1f", v) + "m/s");
+            velocityLabel.setText("v=" + String.format("%.1f", v / PIXELS_PER_METER) + "m/s");
             velocityLine.setVisible(true); velocityHead.setVisible(true); velocityLabel.setVisible(true);
         } else {
             velocityLine.setVisible(false); velocityHead.setVisible(false); velocityLabel.setVisible(false);
@@ -362,14 +369,15 @@ public class Level2Test {
         }
 
         double h  = getHeight();
-        double ke = 0.5 * mass * v * v; // KE = ½mv²
+        double vMs = v / PIXELS_PER_METER; // convert px/s back to m/s
+        double ke = 0.5 * mass * vMs * vMs; // KE = ½mv²
         double pe = mass * 9.81 * h;    // PE = mgh
         double te = ke + pe;
 
         keText.setText("KE = " + String.format("%.2f", ke) + " J");
         peText.setText("PE = " + String.format("%.2f", pe) + " J");
         teText.setText("TE = " + String.format("%.2f", te) + " J");
-        vText .setText("v  = " + String.format("%.2f", v)  + " m/s");
+        vText .setText("v  = " + String.format("%.2f", v / PIXELS_PER_METER)  + " m/s");
         tText .setText("t  = " + String.format("%.2f", simTime) + " s");
     }
 
@@ -392,8 +400,8 @@ public class Level2Test {
 
     public void reset() {
         stop();
-        cart.getState().position.x     = 0;
-        cart.getState().velocity.x     = (float) cart.getVelocity();
+        cart.getState().position.x     = (float) TRACK_X_START; // start at left edge of track
+        cart.getState().velocity.x     = (float)(cart.getVelocity() * PIXELS_PER_METER); // convert m/s to px/s
         cart.getState().acceleration.x = 0;
         simTime = 0;
         motionData.clear();
